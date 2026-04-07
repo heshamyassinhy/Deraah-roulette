@@ -3,378 +3,518 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عجلة الحظ - ميكي ماوس</title>
+    <title>عجلة حظ درعة - احترافية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap');
-        
         body {
             font-family: 'Cairo', sans-serif;
-            background: radial-gradient(circle, #1a1a2e 0%, #16213e 100%);
-            color: white;
             margin: 0;
+            padding: 0;
             overflow-x: hidden;
+            background-color: #111;
+            color: #fff;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 32px;
-        }
-
-        /* حاوية العجلة لضمان التمركز المطلق */
-        .wheel-container {
-            position: relative;
-            width: 100%;
-            max-width: 600px; 
-            aspect-ratio: 1 / 1; 
-            margin: 0 auto;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        #wheelCanvas {
+        /* خلفية متداخلة باستخدام الصورة المرفوعة */
+        .bg-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            border-radius: 50%;
-            box-shadow: 0 0 50px rgba(0,0,0,0.5);
-            z-index: 10;
+            background-image: url('03232 (1920 x 1080 px) (2).jpg');
+            background-size: cover;
+            background-position: center;
+            z-index: -2;
         }
 
-        /* شخصية ميكي ماوس */
-        .mickey-char {
+        /* طبقة داكنة عصرية فوق الخلفية (تم إزالة الشكل البيضاوي وجعلها بسيطة) */
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.35); /* تم تقليل التعتيم لتوضيح الصورة */
+            backdrop-filter: none; /* تم إزالة الضبابية بالكامل */
+            z-index: -1;
+        }
+
+        /* تصميم السهم الذهبي العصري */
+        .golden-arrow {
             position: absolute;
-            bottom: -20px;
-            right: -80px;
-            width: 200px;
-            z-index: 30;
-            pointer-events: none;
-        }
-
-        .character-arm {
-            transform-origin: 140px 100px;
-        }
-
-        .spinning .character-arm {
-            animation: pull-arm 0.6s ease-in-out;
-        }
-
-        @keyframes pull-arm {
-            0%, 100% { transform: rotate(0deg); }
-            50% { transform: rotate(-30deg); }
-        }
-
-        .pointer {
-            position: absolute;
-            top: -20px;
+            top: -25px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
             border-left: 25px solid transparent;
             border-right: 25px solid transparent;
-            border-top: 50px solid #ffeb3b;
-            z-index: 40;
-            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+            border-top: 50px solid #FFD700;
+            z-index: 20;
+            filter: drop-shadow(0px 0px 15px rgba(255, 215, 0, 0.8));
         }
 
-        .spin-btn {
-            background: linear-gradient(45deg, #ffd700, #ff8c00);
-            box-shadow: 0 10px 20px rgba(255, 215, 0, 0.3);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        .wheel-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 550px;
+            margin: 0 auto;
+            aspect-ratio: 1/1;
         }
 
-        .spin-btn:hover {
-            transform: scale(1.05) translateY(-3px);
-            box-shadow: 0 15px 30px rgba(255, 215, 0, 0.5);
+        /* تأثير توهج حول العجلة */
+        .wheel-wrapper::before {
+            content: '';
+            position: absolute;
+            inset: -10px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #C6007E, #FFD700, #C6007E);
+            z-index: -1;
+            filter: blur(20px);
+            opacity: 0.7;
+            animation: pulse-glow 3s infinite alternate;
         }
 
-        .spin-btn:active {
-            transform: scale(0.95);
+        @keyframes pulse-glow {
+            0% { opacity: 0.5; transform: scale(0.98); }
+            100% { opacity: 0.9; transform: scale(1.02); }
         }
 
-        /* تحسين مظهر المدخلات لضمان وضوح النص والقوائم */
-        input, textarea, select {
-            background: rgba(255, 255, 255, 0.15) !important;
-            border: 1px solid rgba(255, 255, 255, 0.3) !important;
-            color: white !important;
+        /* تم تحديد الـ id هنا لمنع تطبيق التأثير الدائري على شاشة الاحتفال */
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            border: 6px solid #222;
         }
 
-        /* لضمان أن النص داخل الـ select يظهر بوضوح عند فتحه */
-        select option {
-            background-color: #1a1a2e !important;
-            color: white !important;
+        /* تأثير زجاجي داكن واحترافي للحاويات */
+        .glass-panel {
+            background: rgba(20, 20, 20, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .modal-winner {
-            animation: popIn 0.5s cubic-bezier(0.26, 0.53, 0.74, 1.48);
+        /* تخصيص التمرير داخل صندوق النصوص */
+        textarea::-webkit-scrollbar {
+            width: 8px;
+        }
+        textarea::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+        textarea::-webkit-scrollbar-thumb {
+            background: rgba(198, 0, 126, 0.5);
+            border-radius: 8px;
         }
 
-        @keyframes popIn {
-            from { transform: scale(0.5); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+        .text-gradient {
+            background: linear-gradient(to left, #FFD700, #C6007E);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 relative">
 
-    <div id="app" class="glass-panel p-6 w-full max-w-4xl shadow-2xl">
+    <!-- زر تكبير الشاشة (Full Screen) -->
+    <button id="btn-fullscreen" class="absolute top-4 left-4 z-50 p-3 bg-white/10 hover:bg-white/20 rounded-full backdrop-blur-md transition-all border border-white/20 text-white shadow-lg" title="تكبير/تصغير الشاشة">
+        <!-- أيقونة التكبير -->
+        <svg id="icon-expand" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+        </svg>
+        <!-- أيقونة التصغير (مخفية افتراضياً) -->
+        <svg id="icon-compress" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 14h4v4m0-4l-5 5m11-1h4v4m0-4l-5 5M14 10h4V6m0 4l-5-5M10 10H6V6m0 4l-5-5" />
+        </svg>
+    </button>
+
+    <!-- الخلفية والصورة المتداخلة -->
+    <div class="bg-layer"></div>
+    <div class="bg-overlay"></div>
+
+    <!-- اللوجو -->
+    <img src="deraah_logo.png" alt="Deraah Logo" class="h-20 md:h-28 mb-8 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] z-10" onerror="this.style.display='none'">
+
+    <!-- الشاشة الأولى: إدخال الأسماء -->
+    <div id="input-screen" class="glass-panel p-8 md:p-12 rounded-[2rem] w-full max-w-xl z-10 transition-all duration-500">
+        <div class="flex justify-center items-center mb-6">
+            <h1 class="text-3xl font-black tracking-wide">قائمة المشاركين</h1>
+        </div>
         
-        <!-- المرحلة 1: إدخال الأسماء -->
-        <div id="step1" class="text-center">
-            <h1 class="text-4xl font-black mb-6 text-yellow-400">مهرجان الحظ مع ميكي</h1>
-            <textarea id="namesInput" rows="6" class="w-full p-4 rounded-2xl text-lg focus:ring-2 focus:ring-yellow-400 outline-none mb-6" placeholder="اكتب الأسماء هنا، كل اسم في سطر..."></textarea>
-            <button onclick="goToStep2()" class="w-full spin-btn py-4 rounded-2xl text-2xl font-bold text-black">استمرار ✨</button>
+        <textarea id="names-input" rows="8" class="w-full p-5 bg-black/40 border border-white/20 rounded-2xl focus:ring-2 focus:ring-[#FFD700] focus:border-transparent outline-none resize-none text-xl mb-8 shadow-inner text-white transition-all" placeholder="أدخل الأسماء..."></textarea>
+        
+        <button id="btn-next" class="w-full bg-gradient-to-l from-[#C6007E] to-[#9e0064] hover:from-[#e30090] hover:to-[#C6007E] text-white font-black text-2xl py-5 rounded-2xl shadow-[0_0_20px_rgba(198,0,126,0.5)] transition-all transform hover:scale-[1.02] active:scale-95 border border-white/20">
+            بدء السحب
+        </button>
+    </div>
+
+    <!-- الشاشة الثانية: العجلة -->
+    <div id="wheel-screen" class="hidden flex-col items-center w-full z-10 transition-all duration-500">
+        <div class="wheel-wrapper mb-12 relative cursor-pointer" id="wheel-container">
+            <div class="golden-arrow"></div>
+            <canvas id="wheel" width="800" height="800"></canvas>
         </div>
+        
+        <button id="btn-spin" class="bg-gradient-to-l from-[#FFD700] to-[#d4af37] text-black hover:scale-[1.05] font-black text-3xl py-5 px-20 rounded-full shadow-[0_0_30px_rgba(255,215,0,0.6)] transition-all active:scale-95 border-2 border-white/50">
+            ســـحـــب !
+        </button>
+        <button id="btn-back" class="mt-8 text-white/50 hover:text-white transition-colors text-lg font-bold flex items-center gap-2">
+            <span>تعديل القائمة</span>
+        </button>
+    </div>
 
-        <!-- المرحلة 2: إعدادات التحكم والنسب المئوية -->
-        <div id="step2" class="hidden text-center">
-            <h2 class="text-3xl font-bold mb-6 text-yellow-400">إعدادات التحكم السرية 🕵️‍♂️</h2>
+    <!-- النافذة المنبثقة (Popup) للفائز -->
+    <div id="winner-modal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="glass-panel rounded-[2rem] p-10 max-w-lg w-full text-center shadow-[0_0_50px_rgba(198,0,126,0.3)] transform scale-95 transition-transform duration-300 relative overflow-hidden" id="modal-content">
             
-            <div class="bg-white/5 p-6 rounded-2xl mb-6 flex items-center gap-4 border border-yellow-500/20">
-                <input type="checkbox" id="enableSpecial" class="w-8 h-8 accent-yellow-500 cursor-pointer" onchange="toggleSpecial()">
-                <label for="enableSpecial" class="text-xl font-bold cursor-pointer">تفعيل وضع "المتحكم الخفي"</label>
-            </div>
-
-            <div id="specialControls" class="hidden mb-6 space-y-4 max-h-[350px] overflow-y-auto pr-2">
-                <div id="conditionsList" class="space-y-4"></div>
-                <button onclick="addConditionRow()" class="text-yellow-400 font-bold hover:text-yellow-300 underline">+ إضافة خطة فوز جديدة</button>
-            </div>
-
-            <div class="flex gap-4">
-                <button onclick="showStep(1)" class="flex-1 bg-white/10 py-4 rounded-2xl font-bold hover:bg-white/20">رجوع</button>
-                <button onclick="goToStep3()" class="flex-1 spin-btn py-4 rounded-2xl text-black font-bold">تجهيز العجلة 🚀</button>
-            </div>
-        </div>
-
-        <!-- المرحلة 3: العجلة الكبيرة -->
-        <div id="step3" class="hidden text-center relative">
-            <h2 class="text-2xl font-black text-yellow-400 mb-6 uppercase tracking-widest">حظك يا بطل مع ميكي!</h2>
-            
-            <div class="wheel-container" id="wheelFrame">
-                <div class="pointer"></div>
+            <div class="relative z-10">
+                <div class="text-7xl mb-6 drop-shadow-2xl">🏆</div>
+                <h2 class="text-3xl font-bold text-white/90 mb-4 tracking-widest">ألـــف مـــبـــروك!</h2>
+                <p id="winner-name" class="text-5xl font-black text-gradient mb-10 py-6 bg-black/30 rounded-2xl border border-white/10 shadow-inner"></p>
                 
-                <!-- ميكي ماوس -->
-                <div class="mickey-char">
-                    <svg viewBox="0 0 200 250" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="60" cy="50" r="35" fill="black"/>
-                        <circle cx="140" cy="50" r="35" fill="black"/>
-                        <circle cx="100" cy="100" r="55" fill="black"/>
-                        <ellipse cx="100" cy="115" rx="45" ry="40" fill="#FFDBAC"/>
-                        <ellipse cx="85" cy="100" rx="18" ry="25" fill="white"/>
-                        <ellipse cx="115" cy="100" rx="18" ry="25" fill="white"/>
-                        <circle cx="85" cy="105" r="5" fill="black"/>
-                        <circle cx="115" cy="105" r="5" fill="black"/>
-                        <ellipse cx="100" cy="125" rx="12" ry="7" fill="black"/>
-                        <path d="M75 135 Q100 155 125 135" stroke="black" fill="none" stroke-width="3" stroke-linecap="round"/>
-                        <rect x="75" y="155" width="50" height="60" fill="red" rx="10"/>
-                        <circle cx="88" cy="180" r="6" fill="white"/>
-                        <circle cx="112" cy="180" r="6" fill="white"/>
-                        <g class="character-arm" id="mickeyArm">
-                            <path d="M75 165 L20 120" stroke="black" stroke-width="12" stroke-linecap="round"/>
-                            <circle cx="20" cy="120" r="18" fill="white" stroke="black" stroke-width="2"/>
-                        </g>
-                    </svg>
-                </div>
-
-                <canvas id="wheelCanvas" width="800" height="800"></canvas>
-            </div>
-
-            <div class="mt-10">
-                <button id="spinBtn" onclick="startSpin()" class="spin-btn px-16 py-5 rounded-full text-3xl font-black text-black">لف العجلة!</button>
-                <p id="counter" class="mt-4 text-gray-400"></p>
+                <button id="btn-continue" class="w-full bg-white text-black hover:bg-gray-200 font-black py-4 rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all text-xl hover:scale-105 active:scale-95">
+                    متابعة
+                </button>
             </div>
         </div>
     </div>
-
-    <!-- نافذة الفائز -->
-    <div id="winnerModal" class="fixed inset-0 bg-black/90 flex items-center justify-center hidden z-[100] p-6">
-        <div class="modal-winner bg-gray-900 border-4 border-yellow-500 p-10 rounded-[3rem] text-center max-w-md w-full shadow-2xl">
-            <div class="text-7xl mb-4">🏆</div>
-            <h3 class="text-2xl text-yellow-400 mb-2">الفائز هو:</h3>
-            <div id="winnerText" class="text-5xl font-black text-white mb-8"></div>
-            <button onclick="closeWinner()" class="w-full bg-yellow-500 text-black py-4 rounded-2xl font-bold text-xl hover:bg-yellow-400">استمرار</button>
-        </div>
-    </div>
-
-    <audio id="spinSound" src="https://assets.mixkit.co/active_storage/sfx/2005/2005-preview.mp3"></audio>
-    <audio id="winSound" src="https://assets.mixkit.co/active_storage/sfx/2012/2012-preview.mp3"></audio>
 
     <script>
         let names = [];
-        let conditions = [];
-        let spinCount = 0;
+        let canvas = document.getElementById('wheel');
+        let ctx = canvas.getContext('2d');
+        let currentRotation = 0;
         let isSpinning = false;
-        let selectedIndex = -1;
+        let lastSliceIndex = -1;
+        let currentWinnerIndex = -1;
 
-        const colors = [
-            ['#f44336', '#b71c1c'], ['#9c27b0', '#4a148c'], ['#2196f3', '#0d47a1'],
-            ['#4caf50', '#1b5e20'], ['#ffeb3b', '#f57f17'], ['#ff9800', '#e65100'],
-            ['#00bcd4', '#006064'], ['#795548', '#3e2723']
-        ];
+        // ألوان عصرية للعجلة (تناسق احترافي: درجات الوردي، الذهبي، والأسود)
+        const colors = ['#C6007E', '#1A1A1A', '#FFD700', '#2D2D2D', '#9e0064', '#0f0f0f'];
+        const textColors = ['#FFFFFF', '#FFFFFF', '#000000', '#FFFFFF', '#FFFFFF', '#FFD700'];
 
-        function showStep(s) {
-            document.querySelectorAll('#app > div').forEach(d => d.classList.add('hidden'));
-            document.getElementById('step' + s).classList.remove('hidden');
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // ----------------------------------------------------
+        // نظام عشوائي مشفر وآمن 100% (Cryptographically Secure)
+        // ----------------------------------------------------
+        function getSecureRandom() {
+            const array = new Uint32Array(1);
+            window.crypto.getRandomValues(array);
+            return array[0] / (0xFFFFFFFF + 1); // يعطي رقم بين 0 و 1
         }
 
-        function toggleSpecial() {
-            document.getElementById('specialControls').classList.toggle('hidden', !document.getElementById('enableSpecial').checked);
-            if (document.getElementById('conditionsList').children.length === 0) addConditionRow();
-        }
-
-        function addConditionRow() {
-            const list = document.getElementById('conditionsList');
-            const row = document.createElement('div');
-            row.className = "p-4 bg-white/10 border border-yellow-500/20 flex flex-wrap gap-4 items-end rounded-2xl";
-            
-            let options = names.map(n => `<option value="${n}">${n}</option>`).join('');
-            
-            row.innerHTML = `
-                <div class="flex-1 min-w-[150px]">
-                    <label class="text-xs text-yellow-500 block mb-1 font-bold">الاسم المختار</label>
-                    <select class="cond-name w-full p-2 rounded-lg bg-gray-800 border border-white/10 text-white">${options}</select>
-                </div>
-                <div class="w-24">
-                    <label class="text-xs text-yellow-500 block mb-1 font-bold">النسبة %</label>
-                    <input type="number" class="cond-percent w-full p-2 rounded-lg bg-gray-800 border border-white/10 text-white" value="100" min="0" max="100">
-                </div>
-                <div class="w-24">
-                    <label class="text-xs text-yellow-500 block mb-1 font-bold">رقم اللفة</label>
-                    <input type="number" class="cond-turn w-full p-2 rounded-lg bg-gray-800 border border-white/10 text-white" value="1" min="1">
-                </div>
-                <button onclick="this.parentElement.remove()" class="text-red-500 text-2xl font-bold px-2">×</button>
-            `;
-            list.appendChild(row);
-        }
-
-        function goToStep2() {
-            const val = document.getElementById('namesInput').value.trim();
-            names = val.split('\n').map(n => n.trim()).filter(n => n !== "");
-            if (names.length < 2) return alert("من فضلك أدخل اسمين على الأقل");
-            showStep(2);
-        }
-
-        function goToStep3() {
-            conditions = [];
-            if (document.getElementById('enableSpecial').checked) {
-                document.querySelectorAll('#conditionsList > div').forEach(row => {
-                    conditions.push({
-                        name: row.querySelector('.cond-name').value,
-                        percent: parseInt(row.querySelector('.cond-percent').value),
-                        turn: parseInt(row.querySelector('.cond-turn').value)
-                    });
-                });
+        function secureShuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(getSecureRandom() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
             }
-            showStep(3);
-            setTimeout(drawWheel, 100);
+        }
+        // ----------------------------------------------------
+
+        // صوت التكتكة (أثناء اللف) - نسخة حديثة
+        function playTick() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            osc.type = 'square';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
+            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        // المؤثرات الاحتفالية الشاملة (موسيقى + محاكاة تفاعل/تصفيق)
+        function playWinSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            
+            // 1. الأوتار الاحتفالية (Fanfare)
+            const chords = [
+                [523.25, 659.25, 783.99], // C
+                [587.33, 698.46, 880.00], // Dm
+                [698.46, 880.00, 1046.50, 1318.51] // Fmaj7 (عالي ومبهج)
+            ];
+            
+            chords.forEach((chord, index) => {
+                const startTime = audioCtx.currentTime + index * 0.18;
+                chord.forEach(freq => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+                    gain.gain.setValueAtTime(0.2, startTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.6);
+                    osc.start(startTime);
+                    osc.stop(startTime + 0.6);
+                });
+            });
+
+            // 2. محاكاة التصفيق والتفاعل (White Noise Filtered)
+            const bufferSize = audioCtx.sampleRate * 3; 
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1); // الضوضاء البيضاء لا تحتاج لتشفير
+            }
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+            
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 1000;
+            filter.Q.value = 0.5;
+
+            const noiseGain = audioCtx.createGain();
+            noiseGain.gain.setValueAtTime(0, audioCtx.currentTime);
+            noiseGain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.5); // تصاعد التصفيق
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 3); // خفوت تدريجي
+            
+            noise.connect(filter);
+            filter.connect(noiseGain);
+            noiseGain.connect(audioCtx.destination);
+            noise.start(audioCtx.currentTime);
+        }
+
+        // إطلاق احتفالات كثيفة ومبهرة
+        function fireConfetti() {
+            const duration = 4000;
+            const end = Date.now() + duration;
+
+            (function frame() {
+                confetti({
+                    particleCount: 8,
+                    angle: 60,
+                    spread: 80,
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#C6007E', '#FFD700', '#ffffff', '#000000'],
+                    zIndex: 100
+                });
+                confetti({
+                    particleCount: 8,
+                    angle: 120,
+                    spread: 80,
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#C6007E', '#FFD700', '#ffffff', '#000000'],
+                    zIndex: 100
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            }());
         }
 
         function drawWheel() {
-            const canvas = document.getElementById('wheelCanvas');
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            const cx = canvas.width / 2;
-            const cy = canvas.height / 2;
-            const radius = cx - 20;
-            const slice = (Math.PI * 2) / names.length;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (names.length === 0) return;
 
-            names.forEach((name, i) => {
-                const angle = i * slice;
-                const grad = ctx.createRadialGradient(cx, cy, 50, cx, cy, radius);
-                grad.addColorStop(0, colors[i % colors.length][0]);
-                grad.addColorStop(1, colors[i % colors.length][1]);
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = centerX - 15;
+            const arc = Math.PI * 2 / names.length;
 
+            for (let i = 0; i < names.length; i++) {
+                const angle = currentRotation + i * arc - Math.PI / 2; 
+                
                 ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.arc(cx, cy, radius, angle, angle + slice);
-                ctx.fillStyle = grad;
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc, false);
+                ctx.lineTo(centerX, centerY);
+                
+                ctx.fillStyle = colors[i % colors.length];
+                if (names.length % colors.length !== 0 && i === names.length - 1 && colors[i % colors.length] === colors[0]) {
+                    ctx.fillStyle = colors[1];
+                }
                 ctx.fill();
-                ctx.strokeStyle = "rgba(255,255,255,0.2)";
-                ctx.lineWidth = 2;
+                
+                // خطوط فاصلة أنيقة
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = '#111';
                 ctx.stroke();
 
                 ctx.save();
-                ctx.translate(cx, cy);
-                ctx.rotate(angle + slice / 2);
+                ctx.translate(centerX, centerY);
+                ctx.rotate(angle + arc / 2);
                 ctx.textAlign = "right";
-                ctx.fillStyle = "white";
-                ctx.font = "bold 40px Cairo";
-                ctx.shadowColor = "black";
-                ctx.shadowBlur = 5;
-                ctx.fillText(name.substring(0, 15), radius - 40, 15);
+                
+                // تحديد لون النص بناءً على الشريحة
+                ctx.fillStyle = textColors[i % textColors.length];
+                if (names.length % colors.length !== 0 && i === names.length - 1 && colors[i % colors.length] === colors[0]) {
+                    ctx.fillStyle = textColors[1];
+                }
+                
+                ctx.font = "900 " + (names.length > 20 ? "18px" : "32px") + " Cairo";
+                
+                // تأثير ظل خفيف للنصوص لزيادة الوضوح
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 4;
+                
+                ctx.fillText(names[i], radius - 40, 10);
                 ctx.restore();
-            });
-
-            // Center Bolt
-            ctx.beginPath();
-            ctx.arc(cx, cy, 35, 0, Math.PI * 2);
-            ctx.fillStyle = "#FFD700";
-            ctx.fill();
-            ctx.strokeStyle = "#000";
-            ctx.lineWidth = 5;
-            ctx.stroke();
-            
-            document.getElementById('counter').innerText = `الأسماء المتبقية: ${names.length}`;
+            }
         }
 
-        function startSpin() {
+        function spin() {
             if (isSpinning || names.length === 0) return;
             isSpinning = true;
-            spinCount++;
             
-            document.getElementById('wheelFrame').classList.add('spinning');
-            document.getElementById('spinSound').play();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
 
-            // المنطق الافتراضي للعشوائية
-            let winnerIdx = Math.floor(Math.random() * names.length);
+            // استخدام العشوائية المشفرة بدلاً من العادية
+            const spinTimeTotal = getSecureRandom() * 3000 + 5000; 
+            const spinStart = Date.now();
+            const startRotation = currentRotation;
+            const targetRotation = currentRotation + (getSecureRandom() * 10 + 15) * Math.PI * 2; 
 
-            // تطبيق شروط التحكم إذا وجدت
-            const cond = conditions.find(c => c.turn === spinCount && names.includes(c.name));
-            if (cond) {
-                if (Math.random() * 100 <= cond.percent) {
-                    winnerIdx = names.indexOf(cond.name);
+            const arc = Math.PI * 2 / names.length;
+
+            // دالة تخفيف السرعة احترافية (Ease Out)
+            function easeOutQuart(t, b, c, d) {
+                t /= d;
+                t--;
+                return -c * (t * t * t * t - 1) + b;
+            }
+
+            function animate() {
+                const now = Date.now();
+                const elapsed = now - spinStart;
+                
+                if (elapsed < spinTimeTotal) {
+                    currentRotation = easeOutQuart(elapsed, startRotation, targetRotation - startRotation, spinTimeTotal);
+                    drawWheel();
+
+                    let normalizedRot = (Math.PI * 2 - (currentRotation % (Math.PI * 2))) % (Math.PI * 2);
+                    let currentSlice = Math.floor(normalizedRot / arc) % names.length;
+
+                    if (currentSlice !== lastSliceIndex) {
+                        playTick();
+                        lastSliceIndex = currentSlice;
+                    }
+
+                    requestAnimationFrame(animate);
+                } else {
+                    currentRotation = targetRotation;
+                    drawWheel();
+                    isSpinning = false;
+                    
+                    let normalizedRot = (Math.PI * 2 - (currentRotation % (Math.PI * 2))) % (Math.PI * 2);
+                    currentWinnerIndex = Math.floor(normalizedRot / arc) % names.length;
+                    
+                    showWinner(names[currentWinnerIndex]);
                 }
             }
-            
-            selectedIndex = winnerIdx;
+            animate();
+        }
 
-            const sliceDeg = 360 / names.length;
-            const extraRot = 360 * 12; // دورات سريعة
-            const targetRot = extraRot + (360 - (winnerIdx * sliceDeg) - (sliceDeg / 2));
+        function showWinner(winnerName) {
+            playWinSound();
+            fireConfetti();
+            document.getElementById('winner-name').innerText = winnerName;
             
-            const canvas = document.getElementById('wheelCanvas');
-            canvas.style.transition = "transform 6s cubic-bezier(0.15, 0, 0.15, 1)";
-            canvas.style.transform = `rotate(${targetRot}deg)`;
-
+            const modal = document.getElementById('winner-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            modal.classList.remove('hidden');
             setTimeout(() => {
-                isSpinning = false;
-                document.getElementById('wheelFrame').classList.remove('spinning');
-                document.getElementById('winnerText').innerText = names[selectedIndex];
-                document.getElementById('winnerModal').classList.remove('hidden');
-                document.getElementById('winSound').play();
-                confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-            }, 6000);
+                modalContent.classList.remove('scale-95');
+                modalContent.classList.add('scale-100');
+            }, 10);
         }
 
-        function closeWinner() {
-            names.splice(selectedIndex, 1);
-            document.getElementById('winnerModal').classList.add('hidden');
-            const canvas = document.getElementById('wheelCanvas');
-            canvas.style.transition = "none";
-            canvas.style.transform = `rotate(0deg)`;
+        function closeModal() {
+            const modal = document.getElementById('winner-modal');
+            const modalContent = document.getElementById('modal-content');
             
-            if (names.length > 0) drawWheel();
-            else {
-                alert("انتهى المهرجان! 🎉");
-                location.reload();
-            }
+            modalContent.classList.remove('scale-100');
+            modalContent.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
         }
+
+        // زر تكبير الشاشة (Full Screen)
+        const fullscreenBtn = document.getElementById('btn-fullscreen');
+        const iconExpand = document.getElementById('icon-expand');
+        const iconCompress = document.getElementById('icon-compress');
+
+        fullscreenBtn.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`خطأ في تشغيل وضع ملء الشاشة: ${err.message}`);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // تغيير الأيقونة عند تبديل حالة الشاشة
+        document.addEventListener('fullscreenchange', () => {
+            if (document.fullscreenElement) {
+                iconExpand.classList.add('hidden');
+                iconCompress.classList.remove('hidden');
+            } else {
+                iconExpand.classList.remove('hidden');
+                iconCompress.classList.add('hidden');
+            }
+        });
+
+        // زر البدء
+        document.getElementById('btn-next').addEventListener('click', () => {
+            const inputText = document.getElementById('names-input').value;
+            names = inputText.split('\n').map(n => n.trim()).filter(n => n.length > 0);
+            
+            if (names.length === 0) return;
+
+            // خلط الأسماء عشوائياً بشكل آمن قبل توزيعها على العجلة
+            secureShuffle(names);
+
+            document.getElementById('input-screen').classList.add('hidden');
+            document.getElementById('wheel-screen').classList.remove('hidden');
+            document.getElementById('wheel-screen').classList.add('flex');
+            
+            currentRotation = 0;
+            drawWheel();
+        });
+
+        // زر العودة
+        document.getElementById('btn-back').addEventListener('click', () => {
+            document.getElementById('wheel-screen').classList.add('hidden');
+            document.getElementById('wheel-screen').classList.remove('flex');
+            document.getElementById('input-screen').classList.remove('hidden');
+        });
+
+        // السحب عبر الضغط على العجلة نفسها أو الزر
+        document.getElementById('btn-spin').addEventListener('click', spin);
+        document.getElementById('wheel-container').addEventListener('click', spin);
+
+        // زر المتابعة (يحذف الفائز تلقائياً)
+        document.getElementById('btn-continue').addEventListener('click', () => {
+            if (currentWinnerIndex > -1) {
+                names.splice(currentWinnerIndex, 1); // حذف تلقائي للاسم
+                currentWinnerIndex = -1;
+                drawWheel();
+            }
+            closeModal();
+            
+            if(names.length === 0) {
+                setTimeout(() => {
+                    document.getElementById('btn-back').click();
+                }, 400);
+            }
+        });
+
     </script>
 </body>
 </html>
