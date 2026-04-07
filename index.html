@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>عجلة حظ درعه  </title>
+    <title>عجلة حظ درعه</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -31,7 +31,7 @@
             z-index: -2;
         }
 
-        /* طبقة داكنة عصرية فوق الخلفية (تم إزالة الشكل البيضاوي وجعلها بسيطة) */
+        /* طبقة داكنة عصرية فوق الخلفية */
         .bg-overlay {
             position: fixed;
             top: 0;
@@ -135,15 +135,25 @@
         </svg>
     </button>
 
+    <!-- اللوجوهات في أعلى اليمين -->
+    <div class="absolute top-4 right-4 z-50 flex flex-col gap-2 w-40 md:w-56 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+        <!-- الصف الأول: الشعارين (D و deraah) متقاربين -->
+        <div class="flex justify-center items-center gap-1 h-10 md:h-14">
+            <img src="D.png" alt="D Logo" class="h-full w-auto object-contain max-w-[48%]" onerror="this.style.display='none'">
+            <img src="deraah_logo.png" alt="Deraah Logo" class="h-full w-auto object-contain max-w-[48%]" onerror="this.style.display='none'">
+        </div>
+        <!-- الصف الثاني: الشعار العريض -->
+        <div class="w-full h-8 md:h-12">
+            <img src="03232 (1920 x 1080 px) (32).png" alt="Wide Logo" class="w-full h-full object-contain" onerror="this.style.display='none'">
+        </div>
+    </div>
+
     <!-- الخلفية والصورة المتداخلة -->
     <div class="bg-layer"></div>
     <div class="bg-overlay"></div>
 
-    <!-- اللوجو -->
-    <img src="deraah_logo.png" alt="Deraah Logo" class="h-20 md:h-28 mb-8 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] z-10" onerror="this.style.display='none'">
-
     <!-- الشاشة الأولى: إدخال الأسماء -->
-    <div id="input-screen" class="glass-panel p-8 md:p-12 rounded-[2rem] w-full max-w-xl z-10 transition-all duration-500">
+    <div id="input-screen" class="glass-panel p-8 md:p-12 rounded-[2rem] w-full max-w-xl z-10 transition-all duration-500 mt-20">
         <div class="flex justify-center items-center mb-6">
             <h1 class="text-3xl font-black tracking-wide">قائمة المشاركين</h1>
         </div>
@@ -156,7 +166,7 @@
     </div>
 
     <!-- الشاشة الثانية: العجلة -->
-    <div id="wheel-screen" class="hidden flex-col items-center w-full z-10 transition-all duration-500">
+    <div id="wheel-screen" class="hidden flex-col items-center w-full z-10 transition-all duration-500 mt-16">
         <div class="wheel-wrapper mb-12 relative cursor-pointer" id="wheel-container">
             <div class="golden-arrow"></div>
             <canvas id="wheel" width="800" height="800"></canvas>
@@ -218,25 +228,42 @@
         }
         // ----------------------------------------------------
 
-        // صوت التكتكة (أثناء اللف) - نسخة حديثة
+        // صوت التكة الميكانيكية (Spin Wheel Click)
         function playTick() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            const t = audioCtx.currentTime;
+
+            // الجزء الحاد من الطقة (Click)
             const osc = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
             osc.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.05);
-            gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.05);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(1000, t);
+            osc.frequency.exponentialRampToValueAtTime(100, t + 0.02);
+            gainNode.gain.setValueAtTime(0.4, t);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, t + 0.02);
+            osc.start(t);
+            osc.stop(t + 0.02);
+
+            // الجزء العريض من الطقة لمحاكاة الاصطدام الخشبي/البلاستيكي
+            const osc2 = audioCtx.createOscillator();
+            const gainNode2 = audioCtx.createGain();
+            osc2.connect(gainNode2);
+            gainNode2.connect(audioCtx.destination);
+            osc2.type = 'triangle';
+            osc2.frequency.setValueAtTime(200, t);
+            osc2.frequency.exponentialRampToValueAtTime(50, t + 0.04);
+            gainNode2.gain.setValueAtTime(0.3, t);
+            gainNode2.gain.exponentialRampToValueAtTime(0.001, t + 0.04);
+            osc2.start(t);
+            osc2.stop(t + 0.04);
         }
 
-        // المؤثرات الاحتفالية الشاملة (موسيقى + محاكاة تفاعل/تصفيق)
+        // المؤثرات الاحتفالية الشاملة (موسيقى + تصفيق حار)
         function playWinSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
+            const t = audioCtx.currentTime;
             
             // 1. الأوتار الاحتفالية (Fanfare)
             const chords = [
@@ -246,7 +273,7 @@
             ];
             
             chords.forEach((chord, index) => {
-                const startTime = audioCtx.currentTime + index * 0.18;
+                const startTime = t + index * 0.18;
                 chord.forEach(freq => {
                     const osc = audioCtx.createOscillator();
                     const gain = audioCtx.createGain();
@@ -261,30 +288,31 @@
                 });
             });
 
-            // 2. محاكاة التصفيق والتفاعل (White Noise Filtered)
-            const bufferSize = audioCtx.sampleRate * 3; 
+            // 2. محاكاة التصفيق الحار والكثيف (White Noise Filtered)
+            const bufferSize = audioCtx.sampleRate * 5; 
             const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
             const data = buffer.getChannelData(0);
             for (let i = 0; i < bufferSize; i++) {
-                data[i] = (Math.random() * 2 - 1); // الضوضاء البيضاء لا تحتاج لتشفير
+                data[i] = (Math.random() * 2 - 1); 
             }
             const noise = audioCtx.createBufferSource();
             noise.buffer = buffer;
             
             const filter = audioCtx.createBiquadFilter();
             filter.type = 'bandpass';
-            filter.frequency.value = 1000;
-            filter.Q.value = 0.5;
+            filter.frequency.value = 800; // نطاق أعرض لصوت تصفيق ضخم
+            filter.Q.value = 0.3;
 
             const noiseGain = audioCtx.createGain();
-            noiseGain.gain.setValueAtTime(0, audioCtx.currentTime);
-            noiseGain.gain.linearRampToValueAtTime(0.6, audioCtx.currentTime + 0.5); // تصاعد التصفيق
-            noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 3); // خفوت تدريجي
+            noiseGain.gain.setValueAtTime(0, t);
+            noiseGain.gain.linearRampToValueAtTime(1.0, t + 0.5); // تصاعد التصفيق بقوة أكبر
+            noiseGain.gain.setValueAtTime(1.0, t + 3.0); // الثبات للحظات أطول
+            noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 5.0); // خفوت تدريجي
             
             noise.connect(filter);
             filter.connect(noiseGain);
             noiseGain.connect(audioCtx.destination);
-            noise.start(audioCtx.currentTime);
+            noise.start(t);
         }
 
         // إطلاق احتفالات كثيفة ومبهرة
@@ -399,7 +427,7 @@
                     let currentSlice = Math.floor(normalizedRot / arc) % names.length;
 
                     if (currentSlice !== lastSliceIndex) {
-                        playTick();
+                        playTick(); // تشغيل صوت التكة الجديدة هنا
                         lastSliceIndex = currentSlice;
                     }
 
@@ -419,7 +447,7 @@
         }
 
         function showWinner(winnerName) {
-            playWinSound();
+            playWinSound(); // تشغيل أصوات الفوز والتصفيق
             fireConfetti();
             document.getElementById('winner-name').innerText = winnerName;
             
